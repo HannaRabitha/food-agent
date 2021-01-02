@@ -7,6 +7,7 @@ var webhook = require('dialogflow-fulfillment');
 
 var indexRouter = require('./routes/index');
 var foodRouter = require('./routes/food');
+var foodidnRouter = require('./routes/food-idn');
 var weatherRouter = require('./routes/weather');
 
 var app = express();
@@ -23,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/food', foodRouter);
+app.use('/food-idn', foodidnRouter);
 app.use('/weather', weatherRouter);
 
 
