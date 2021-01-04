@@ -8,15 +8,15 @@ const translate = require('@k3rn31p4nic/google-translate-api');
 /* GET home page. */
 router.get('/', function(req, res, next) {
 
-  translate('Tu es incroyable!', { to: 'en' }).then(res => {
-    console.info(res.text); // OUTPUT: You are amazing!
-    var hasil = res.text;
+  // translate('Tu es incroyable!', { to: 'en' }).then(res => {
+  //   console.info(res.text); // OUTPUT: You are amazing!
+  //   var hasil = res.text;
 
 
-    // res.render('index', { title: hasil });
-  }).catch(err => {
-    console.error(err);
-  });
+  //   // res.render('index', { title: hasil });
+  // }).catch(err => {
+  //   console.error(err);
+  // });
 
   var product = "MOCHI";
  
