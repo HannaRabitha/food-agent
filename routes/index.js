@@ -46,19 +46,8 @@ router.get('/', function(req, res, next) {
         }
         
         let textResponse = `Nama Makanan : ${foodArray}`;
-        // res.render('index', { title: textResponse });
-        // res.render('index', { title: hasil });
-
-
-      //   translate('Ik spreek Engels', {to: 'en'}).then(res => {
-      //     console.log(res.text);
-      //     //=> I speak English
-      //     console.log(res.from.language.iso);
-      //     //=> nl
-      // }).catch(err => {
-      //     console.error(err);
-      // });
-
+        res.render('index', { title: textResponse });
+       
 
         
   }).catch(err => {
