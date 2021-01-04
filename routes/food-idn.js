@@ -1,8 +1,10 @@
 var express = require('express');
 var axios = require('axios');
 var router = express.Router();
+
 const dfff = require('dialogflow-fulfillment');
 const bodyParser = require('body-parser');
+const translate = require('@k3rn31p4nic/google-translate-api');
 
 const app = express();
 app.use(bodyParser.json());
@@ -11,7 +13,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 router.get('/', function(req, res, next){
     res.send("Hello World, this food-idn.js")
 });
-
 
 
 router.post('/', function(req, res, next) {
@@ -161,10 +162,21 @@ function getIngredients (agent) {
             var food = data.food_name.value;
             var ingredients= data.ing.value;
             var link= data.url.value;
-            var ing = ingredients.replace(/--/g , "\n");
+            var ing = ingredients.replace(/--/g , ". ");
+
+            return translate(ing, {from:'id', to: 'en' }).then(res => {
+              console.info(res.text); // OUTPUT: You are amazing!
+              var ing_trans=res.text;
+
             agent.add('Bahan Makanan ' + food);
-            agent.add(ing);
+            agent.add(ing_trans);
             agent.add("link : " +link);
+
+
+            
+            }).catch(err => {
+              console.error(err);
+            });
        
         }).catch (error => {
           console.log("Something is wrong  !! ");

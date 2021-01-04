@@ -1,10 +1,22 @@
 var express = require('express');
 var router = express.Router();
 var axios = require('axios');
+const translate = require('@k3rn31p4nic/google-translate-api');
+
 
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
+
+  translate('Tu es incroyable!', { to: 'en' }).then(res => {
+    console.info(res.text); // OUTPUT: You are amazing!
+    var hasil = res.text;
+
+
+    // res.render('index', { title: hasil });
+  }).catch(err => {
+    console.error(err);
+  });
 
   var product = "MOCHI";
  
@@ -34,13 +46,27 @@ router.get('/', function(req, res, next) {
         }
         
         let textResponse = `Nama Makanan : ${foodArray}`;
-        res.render('index', { title: textResponse });
+        // res.render('index', { title: textResponse });
+        // res.render('index', { title: hasil });
+
+
+      //   translate('Ik spreek Engels', {to: 'en'}).then(res => {
+      //     console.log(res.text);
+      //     //=> I speak English
+      //     console.log(res.from.language.iso);
+      //     //=> nl
+      // }).catch(err => {
+      //     console.error(err);
+      // });
+
+
         
   }).catch(err => {
     console.log(err);
   })
   
 });
+
          
 
 module.exports = router;
