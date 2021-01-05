@@ -34,6 +34,7 @@ router.post('/', function(req, res, next) {
   intentMap.set('searchIngredients', searchIngredients);
   intentMap.set('searchNutrients', searchNutrients);
   intentMap.set('checkIngredients',checkIngredients);
+  intentMap.set('checkNutrients', checkNutrients);
   agent.handleRequest(intentMap);
 
 });
@@ -395,6 +396,71 @@ function checkIngredients(agent) {
                       var data = aRes.data.results.bindings[0];
                       
                       agent.add('Ya, terdapat '+ing_id+ ' pada ' +foodName_id);
+
+                  }).catch (error => {
+                    console.log("Something is wrong  !! ");
+                    console.log(error);
+                    agent.add('Tidak');
+                });
+
+
+      }
+    )
+
+
+    }
+  )
+
+
+};
+
+
+
+function checkNutrients(agent) {
+
+  var foodName_id = agent.parameters["foodName"];
+  var foodName_en;
+  console.info(foodName_id);
+
+
+  var nut_id = agent.parameters["nutrients"];
+  var nut_en;
+  console.info(nut_id);
+
+  return translate(foodName_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      foodName_en=res.text;
+
+      return translate(nut_id, {from: 'id', to: 'en'}).then(
+        res=> {
+          console.log(res.text);
+          nut_en=res.text;
+
+                console.log("cek nutrisi " +foodName_en)+ "dengan bahan " +nut_en;
+                var endpoint = 'http://localhost:3030/food-BFPD/sparql';
+                var query =  
+                `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+                        SELECT DISTINCT ?food_name ?nut
+                        WHERE {
+                        ?a food:hasName ?food_name;
+                            food:hasNutrient ?nut
+                            FILTER regex(?food_name, "${foodName_en}", "i")
+                            FILTER regex(?nut, "${nut_en}", "i")
+                        }
+                    order by strlen(str(?food_name))
+                    LIMIT 1`;
+
+                var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+
+                return getURL(queryUrl)
+                    .then(aRes => {
+                      console.log('data ',aRes.data.results.bindings)
+                      var data = aRes.data.results.bindings[0];
+                      
+                      agent.add('Ya, terdapat '+nut_id+ ' pada ' +foodName_id);
 
                   }).catch (error => {
                     console.log("Something is wrong  !! ");
