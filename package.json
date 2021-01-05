@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@k3rn31p4nic/google-translate-api": "^1.1.1",
+    "@vitalets/google-translate-api": "^4.0.0",
     "actions-on-google": "^2.13.0",
     "axios": "^0.21.1",
     "cookie-parser": "~1.4.4",
@@ -19,6 +20,7 @@
     "jade": "~1.11.0",
     "language-translator": "^1.2.6",
     "morgan": "~1.9.1",
-    "open-translate": "^1.4.3"
+    "open-translate": "^1.4.3",
+    "translate-google": "^1.4.3"
   }
 }
