@@ -30,6 +30,8 @@ router.post('/', function(req, res, next) {
   intentMap.set('webhookTest', webhookTest);
   intentMap.set('searchFood', searchFood);
   intentMap.set('getIngredients', getIngredients);
+  intentMap.set('getNutrients', getNutrients);
+  intentMap.set('searchIngredients', searchIngredients);
   agent.handleRequest(intentMap);
 
 });
@@ -51,7 +53,6 @@ function getURL(queryUrl) {
 }
 
 
-
 function searchFood (agent) {
   var foodName_id = agent.parameters["foodName"];
   var foodName_en;
@@ -68,14 +69,9 @@ function searchFood (agent) {
   `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
   PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
-          SELECT DISTINCT ?food_name ?man ?ing ?nut ?ss ?sh
+          SELECT DISTINCT ?food_name
           WHERE {
-           ?a food:hasName ?food_name;
-              food:productBy ?man;
-              food:hasIng ?ing;
-          food:hasNutrient ?nut;
-           food:hasServingSize ?ss;
-             food:hasServingHousehold ?sh
+           ?a food:hasName ?food_name
               FILTER regex(?food_name, "${foodName_en}", "i")
           }
       order by strlen(str(?food_name))
@@ -124,18 +120,14 @@ function getIngredients(agent) {
   `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
   PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
-          SELECT DISTINCT ?food_name ?man ?ing ?nut ?ss ?sh
+          SELECT DISTINCT ?food_name ?ing
           WHERE {
            ?a food:hasName ?food_name;
-              food:productBy ?man;
-              food:hasIng ?ing;
-          food:hasNutrient ?nut;
-           food:hasServingSize ?ss;
-             food:hasServingHousehold ?sh
+              food:hasIng ?ing
               FILTER regex(?food_name, "${foodName_en}", "i")
           }
       order by strlen(str(?food_name))
-      LIMIT 7`;
+      LIMIT 1`;
 
   var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
 
@@ -172,6 +164,130 @@ function getIngredients(agent) {
 
 };
 
+
+function getNutrients(agent) {
+
+  var foodName_id = agent.parameters["foodName"];
+  var foodName_en;
+  console.info(foodName_id);
+
+  return translate(foodName_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      foodName_en=res.text;
+
+  console.log("Cari nutrisi untuk " +foodName_en);
+  
+  var endpoint = 'http://localhost:3030/food-BFPD/sparql';
+  var query =  
+  `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+          SELECT DISTINCT ?food_name ?nut ?ss ?sh
+          WHERE {
+           ?a food:hasName ?food_name;
+          food:hasNutrient ?nut;
+           food:hasServingSize ?ss;
+             food:hasServingHousehold ?sh
+              FILTER regex(?food_name, "${foodName_en}", "i")
+          }
+      order by strlen(str(?food_name))
+      LIMIT 1`;
+
+  var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+
+  return getURL(queryUrl)
+      .then(aRes => {
+        console.log('data ',aRes.data.results.bindings)
+        var data = aRes.data.results.bindings[0];
+        
+        var foodName = data.food_name.value;
+        var nut= data.nut.value;
+        var ss= data.ss.value;
+        var sh= data.sh.value;
+        
+
+        return translate(nut, {from:'en', to: 'id' }).then(res => {
+          console.info(res.text); // OUTPUT: You are amazing!
+          var nut_temp=res.text;
+
+          var nut_temp2= nut_temp.replace(/--/g , " \n");
+          var nut_id= nut_temp2.replace(/-/g , " \n");
+
+          // agent.add('OK');
+          
+        agent.add('Fakta Nutrisi ' + foodName + ' : ');
+        agent.add('Jumlah per ' + ss);
+        agent.add(nut_id);
+        
+        }).catch(err => {
+          console.error(err);
+        });
+   
+    }).catch (error => {
+      console.log("Something is wrong  !! ");
+      console.log(error);
+      agent.add('Makanan tidak ditemukan');
+  });
+
+
+    }
+  )
+
+};
+
+
+function searchIngredients(agent) {
+
+  var ing_id = agent.parameters["ingredients"];
+  var ing_en;
+  console.info(ing_id);
+
+  return translate(ing_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      ing_en=res.text;
+
+  console.log("makanan untuk " +ing_en);
+  var endpoint = 'http://localhost:3030/food-BFPD/sparql';
+  var query =  
+  `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+          SELECT DISTINCT ?food_name
+          WHERE {
+           ?a food:hasName ?food_name;
+              food:hasIng ?ing
+              FILTER regex(?ing, "${ing_en}", "i")
+          }
+      order by strlen(str(?food_name))
+      LIMIT 7`;
+
+  var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+
+  var foodArray = [];
+
+  return getURL(queryUrl)
+      .then(aRes => {
+        console.log('data ',aRes.data.results.bindings)
+        var data = aRes.data.results.bindings;
+        
+        agent.add(`Produk makanan mengandung ${ing_id} : `);
+        for(var i in data) {    
+          var item = data[i];  
+              foodArray[i] = item.food_name.value;
+              agent.add('- ' + foodArray[i]);
+        }
+    }).catch (error => {
+      console.log("Something is wrong  !! ");
+      console.log(error);
+      var bot_response ="Data tidak ditemukan";
+      agent.add(bot_response);
+  });
+}
+)
+
+};
 
 
 
