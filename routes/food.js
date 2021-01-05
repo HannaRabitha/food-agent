@@ -32,6 +32,7 @@ router.post('/', function(req, res, next) {
   intentMap.set('getIngredients', getIngredients);
   intentMap.set('getNutrients', getNutrients);
   intentMap.set('searchIngredients', searchIngredients);
+  intentMap.set('searchNutrients', searchNutrients);
   agent.handleRequest(intentMap);
 
 });
@@ -205,24 +206,27 @@ function getNutrients(agent) {
         var nut= data.nut.value;
         var ss= data.ss.value;
         var sh= data.sh.value;
-        
 
-        return translate(nut, {from:'en', to: 'id' }).then(res => {
-          console.info(res.text); // OUTPUT: You are amazing!
-          var nut_temp=res.text;
+        if(nut !== null && nut !== '') {        
 
-          var nut_temp2= nut_temp.replace(/--/g , " \n");
-          var nut_id= nut_temp2.replace(/-/g , " \n");
+              return translate(nut, {from:'en', to: 'id' }).then(res => {
+                console.info(res.text); // OUTPUT: You are amazing!
+                var nut_temp=res.text;
 
-          // agent.add('OK');
+                var nut_temp2= nut_temp.replace(/--/g , " \n");
+                var nut_id= nut_temp2.replace(/-/g , " \n");
+            
+                  agent.add('Fakta Nutrisi ' + foodName + ' : ');
+                  agent.add('Jumlah per ' + ss);
+                  agent.add(nut_id);
           
-        agent.add('Fakta Nutrisi ' + foodName + ' : ');
-        agent.add('Jumlah per ' + ss);
-        agent.add(nut_id);
-        
-        }).catch(err => {
-          console.error(err);
-        });
+              }).catch(err => {
+                console.error(err);
+              });
+
+      }else {
+        agent.add('Fakta Nutrisi tidak ada');
+      }
    
     }).catch (error => {
       console.log("Something is wrong  !! ");
@@ -273,6 +277,61 @@ function searchIngredients(agent) {
         var data = aRes.data.results.bindings;
         
         agent.add(`Produk makanan mengandung ${ing_id} : `);
+        for(var i in data) {    
+          var item = data[i];  
+              foodArray[i] = item.food_name.value;
+              agent.add('- ' + foodArray[i]);
+        }
+    }).catch (error => {
+      console.log("Something is wrong  !! ");
+      console.log(error);
+      var bot_response ="Data tidak ditemukan";
+      agent.add(bot_response);
+  });
+}
+)
+
+};
+
+
+
+
+function searchNutrients(agent) {
+
+  var nut_id = agent.parameters["nutrients"];
+  var nut_en;
+  console.info(nut_id);
+
+  return translate(nut_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      nut_en=res.text;
+
+  console.log("makanan untuk " +nut_en);
+  var endpoint = 'http://localhost:3030/food-BFPD/sparql';
+  var query =  
+  `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+          SELECT DISTINCT ?food_name
+          WHERE {
+           ?a food:hasName ?food_name;
+              food:hasNutrient ?nut
+              FILTER regex(?nut, "${nut_en}", "i")
+          }
+      order by strlen(str(?food_name))
+      LIMIT 7`;
+
+  var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+
+  var foodArray = [];
+
+  return getURL(queryUrl)
+      .then(aRes => {
+        console.log('data ',aRes.data.results.bindings)
+        var data = aRes.data.results.bindings;
+        
+        agent.add(`Produk makanan mengandung ${nut_id} : `);
         for(var i in data) {    
           var item = data[i];  
               foodArray[i] = item.food_name.value;
