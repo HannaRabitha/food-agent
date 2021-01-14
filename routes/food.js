@@ -29,32 +29,32 @@ router.post('/', function(req, res, next) {
   let intentMap = new Map();
   intentMap.set('webhookTest', webhookTest);
   intentMap.set('searchFood', searchFood);
+  
   intentMap.set('getIngredients', getIngredients);
   intentMap.set('getNutrients', getNutrients);
+  
   intentMap.set('searchIngredients', searchIngredients);
   intentMap.set('searchNutrients', searchNutrients);
+  
+  intentMap.set('getInfoIngredients', getInfoIngredients);
+  intentMap.set('getInfoNutrients', getInfoNutrients);
+  
   intentMap.set('checkIngredients',checkIngredients);
   intentMap.set('checkNutrients', checkNutrients);
   agent.handleRequest(intentMap);
 
 });
 
-
-
-
  
 function webhookTest(agent) {
   agent.add("sending response from webhook server")
 }
-
-
 
 function getURL(queryUrl) {
   const axios = require('axios');
   return axios
       .get(queryUrl);
 }
-
 
 function searchFood (agent) {
   var foodName_id = agent.parameters["foodName"];
@@ -104,6 +104,201 @@ function searchFood (agent) {
 }
 )
 };
+
+
+
+function getInfoNutrients(agent) {
+
+  var nut_id = agent.parameters["nutrients"];
+  var nut_en;
+  console.info(nut_id);
+
+  return translate(nut_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      nut_en=res.text;
+
+  
+      // var nut = nut_en.replace(/\s/g, "");
+
+  console.log("Cari DbPedia Source " +nut_en);
+
+  var endpoint = 'http://localhost:3030/BFPD-food/sparql';
+  var query =  `
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+  PREFIX owl: <http://www.w3.org/2002/07/owl#>
+  
+  select ?label ?dbpedia
+  where {
+  ?a rdfs:label ?label;
+     owl:sameAs ?dbpedia.
+     FILTER regex(?label, "${nut_en}", "i")
+  }
+  order by strlen(str(?label))
+  LIMIT 1
+  `;
+
+  var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+  return axios
+      .get(queryUrl)
+      .then(aRes => {
+        console.log('data ',aRes.data.results.bindings)
+        var label = aRes.data.results.bindings[0].label.value;
+        var dbpedia = aRes.data.results.bindings[0].dbpedia.value;
+        var dbpedia_src = "<" + dbpedia + ">"; 
+
+        // agent.add(label);
+        // agent.add(dbpedia_src);
+  
+
+                      var endpoint2 = 'https://dbpedia.org/sparql';
+                      var query2 =  `
+                      select ?label ?desc ?link
+                        where {
+                         
+                        ${dbpedia_src} rdfs:label  ?label.
+                        ${dbpedia_src} rdfs:comment  ?desc.
+                        ${dbpedia_src} foaf:isPrimaryTopicOf  ?link.
+
+                        FILTER (lang(?label) = 'in')
+                        FILTER (lang(?desc) = 'in')
+                        }
+                        `;
+                      
+                        var queryUrl2 = endpoint2 + "?query=" + encodeURIComponent(query2) + "&format=json";
+                        return axios
+                            .get(queryUrl2)
+                            .then(aRes => {
+                              console.log('data ',aRes.data.results.bindings)
+                              var label = aRes.data.results.bindings[0].label.value;
+                              var desc = aRes.data.results.bindings[0].desc.value;
+                              var link = aRes.data.results.bindings[0].link.value;
+                        
+                              // let textResponse = `Label: ${label} \n Deskripsi : ${desc} \n link : ${link}`;
+                              // res.render('index', { title: textResponse });
+
+                              agent.add('Informasi ' + label);
+                              agent.add(desc);
+                              agent.add('Source :' + link);
+                              
+                        }).catch(err => {
+                          console.log(err);
+                          console.info("DATA INDONESIA TIDAK TERSEDIA");
+                          agent.add("Informasi bahasa tidak tersedia");
+                        })
+                        
+
+  }).catch(err => {
+    console.log(err);
+    console.info("DATA TIDAK TERSEDIA");
+    agent.add("Informasi tidak tersedia");
+  })
+
+
+}
+)
+
+
+};
+
+function getInfoIngredients(agent) {
+
+  var ing_id = agent.parameters["ingredients"];
+  var ing_en;
+  console.info(ing_id);
+
+  return translate(ing_id, {from: 'id', to: 'en'}).then(
+    res=> {
+      console.log(res.text);
+      ing_en=res.text;
+
+  
+      // var nut = nut_en.replace(/\s/g, "");
+
+  console.log("Cari DbPedia Source " +ing_en);
+
+  var endpoint = 'http://localhost:3030/BFPD-food/sparql';
+  var query =  `
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX food: <http://localhost:3030/hanna/food-BFPD#>
+  PREFIX owl: <http://www.w3.org/2002/07/owl#>
+  
+  select ?label ?dbpedia
+  where {
+  ?a rdfs:label ?label;
+     owl:sameAs ?dbpedia.
+     FILTER regex(?label, "${ing_en}", "i")
+  }
+  order by strlen(str(?label))
+  LIMIT 1
+  `;
+
+  var queryUrl = endpoint + "?query=" + encodeURIComponent(query) + "&format=json";
+  return axios
+      .get(queryUrl)
+      .then(aRes => {
+        console.log('data ',aRes.data.results.bindings)
+        var label = aRes.data.results.bindings[0].label.value;
+        var dbpedia = aRes.data.results.bindings[0].dbpedia.value;
+        var dbpedia_src = "<" + dbpedia + ">"; 
+
+        // agent.add(label);
+        // agent.add(dbpedia_src);
+  
+
+                      var endpoint2 = 'https://dbpedia.org/sparql';
+                      var query2 =  `
+                      select ?label ?desc ?link
+                        where {
+                         
+                        ${dbpedia_src} rdfs:label  ?label.
+                        ${dbpedia_src} rdfs:comment  ?desc.
+                        ${dbpedia_src} foaf:isPrimaryTopicOf  ?link.
+
+                        FILTER (lang(?label) = 'in')
+                        FILTER (lang(?desc) = 'in')
+                        }
+                        `;
+                      
+                        var queryUrl2 = endpoint2 + "?query=" + encodeURIComponent(query2) + "&format=json";
+                        return axios
+                            .get(queryUrl2)
+                            .then(aRes => {
+                              console.log('data ',aRes.data.results.bindings)
+                              var label = aRes.data.results.bindings[0].label.value;
+                              var desc = aRes.data.results.bindings[0].desc.value;
+                              var link = aRes.data.results.bindings[0].link.value;
+                        
+                              // let textResponse = `Label: ${label} \n Deskripsi : ${desc} \n link : ${link}`;
+                              // res.render('index', { title: textResponse });
+
+                              agent.add('Informasi ' + label);
+                              agent.add(desc);
+                              agent.add('Source :' + link);
+                              
+                        }).catch(err => {
+                          console.log(err);
+                          console.info("DATA INDONESIA TIDAK TERSEDIA");
+                          agent.add("Informasi bahasa tidak tersedia");
+                        })
+                        
+
+  }).catch(err => {
+    console.log(err);
+    console.info("DATA TIDAK TERSEDIA");
+    agent.add("Informasi tidak tersedia");
+  })
+
+
+}
+)
+
+
+};
+
 
 
 function getIngredients(agent) {
@@ -167,7 +362,6 @@ function getIngredients(agent) {
 
 };
 
-
 function getNutrients(agent) {
 
   var foodName_id = agent.parameters["foodName"];
@@ -209,7 +403,7 @@ function getNutrients(agent) {
         var ss= data.ss.value;
         var sh= data.sh.value;
 
-        if(nut !== null && nut !== '') {        
+        if(nut !== null && nut !== 'NULL') {        
 
               return translate(nut, {from:'en', to: 'id' }).then(res => {
                 console.info(res.text); // OUTPUT: You are amazing!
@@ -227,7 +421,7 @@ function getNutrients(agent) {
               });
 
       }else {
-        agent.add('Fakta Nutrisi tidak ada');
+        agent.add('Fakta Nutrisi tidak tersedia');
       }
    
     }).catch (error => {
@@ -241,7 +435,6 @@ function getNutrients(agent) {
   )
 
 };
-
 
 function searchIngredients(agent) {
 
@@ -295,9 +488,6 @@ function searchIngredients(agent) {
 
 };
 
-
-
-
 function searchNutrients(agent) {
 
   var nut_id = agent.parameters["nutrients"];
@@ -332,13 +522,15 @@ function searchNutrients(agent) {
       .then(aRes => {
         console.log('data ',aRes.data.results.bindings)
         var data = aRes.data.results.bindings;
-        
-        agent.add(`Produk makanan mengandung ${nut_id} : `);
-        for(var i in data) {    
-          var item = data[i];  
-              foodArray[i] = item.food_name.value;
-              agent.add('- ' + foodArray[i]);
-        }
+
+                      agent.add(`Produk makanan mengandung ${nut_id} : `);
+                      
+                      for(var i in data) {    
+                        var item = data[i];  
+                            foodArray[i] = item.food_name.value;
+                            agent.add('- ' + foodArray[i]);
+                      }
+
     }).catch (error => {
       console.log("Something is wrong  !! ");
       console.log(error);
@@ -349,7 +541,6 @@ function searchNutrients(agent) {
 )
 
 };
-
 
 function checkIngredients(agent) {
 
@@ -394,8 +585,10 @@ function checkIngredients(agent) {
                     .then(aRes => {
                       console.log('data ',aRes.data.results.bindings)
                       var data = aRes.data.results.bindings[0];
+                      var foodName = data.food_name.value;
                       
-                      agent.add('Ya, terdapat '+ing_id+ ' pada ' +foodName_id);
+                      agent.add('Ya, terdapat '+ing_id+ ' pada produk seperti ' +foodName);
+                    
 
                   }).catch (error => {
                     console.log("Something is wrong  !! ");
@@ -413,8 +606,6 @@ function checkIngredients(agent) {
 
 
 };
-
-
 
 function checkNutrients(agent) {
 
@@ -459,8 +650,9 @@ function checkNutrients(agent) {
                     .then(aRes => {
                       console.log('data ',aRes.data.results.bindings)
                       var data = aRes.data.results.bindings[0];
+                      var foodName = data.food_name.value;
                       
-                      agent.add('Ya, terdapat '+nut_id+ ' pada ' +foodName_id);
+                      agent.add('Ya, terdapat '+nut_id+ ' pada ' +foodName);
 
                   }).catch (error => {
                     console.log("Something is wrong  !! ");
@@ -478,7 +670,6 @@ function checkNutrients(agent) {
 
 
 };
-
 
 
 
