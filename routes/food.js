@@ -33,8 +33,8 @@ router.post('/', function(req, res, next) {
   intentMap.set('getIngredients', getIngredients);
   intentMap.set('getNutrients', getNutrients);
   
-  intentMap.set('searchIngredients', searchIngredients);
-  intentMap.set('searchNutrients', searchNutrients);
+  intentMap.set('getFoodByIngredients', getFoodByIngredients);
+  intentMap.set('getFoodByNutrients', getFoodByNutrients);
   
   intentMap.set('getInfoIngredients', getInfoIngredients);
   intentMap.set('getInfoNutrients', getInfoNutrients);
@@ -436,7 +436,7 @@ function getNutrients(agent) {
 
 };
 
-function searchIngredients(agent) {
+function getFoodByIngredients(agent) {
 
   var ing_id = agent.parameters["ingredients"];
   var ing_en;
@@ -488,7 +488,7 @@ function searchIngredients(agent) {
 
 };
 
-function searchNutrients(agent) {
+function getFoodByNutrients(agent) {
 
   var nut_id = agent.parameters["nutrients"];
   var nut_en;
