@@ -57,7 +57,13 @@ function getURL(queryUrl) {
 }
 
 function searchFood (agent) {
+
+  if(agent.parameters["foodName"] == '' || agent.parameters["foodName"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
+
   var foodName_id = agent.parameters["foodName"];
+
   var foodName_en;
   console.info(foodName_id);
 
@@ -88,26 +94,39 @@ function searchFood (agent) {
       .then(aRes => {
         console.log('data ',aRes.data.results.bindings)
         var data = aRes.data.results.bindings;
-        
-        agent.add(`Produk makanan ${foodName_id} : `);
-        for(var i in data) {    
-          var item = data[i];  
-              foodArray[i] = item.food_name.value;
-              agent.add('- ' + foodArray[i]);
+
+        if(data == '' || data == null) { 
+          agent.add('Makanan tidak ada') 
+        } else{
+
+          agent.add(`Produk makanan ${foodName_id} : `);
+                    for(var i in data) {    
+                      var item = data[i];  
+                          foodArray[i] = item.food_name.value;
+                          agent.add('- ' + foodArray[i]);
+                            }
         }
+    
     }).catch (error => {
       console.log("Something is wrong  !! ");
       console.log(error);
       var bot_response ="Data tidak ditemukan";
       agent.add(bot_response);
   });
+  
 }
+
 )
+
+   }
+
 };
 
-
-
 function getInfoNutrients(agent) {
+
+  if(agent.parameters["nutrients"] == '' || agent.parameters["nutrients"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var nut_id = agent.parameters["nutrients"];
   var nut_en;
@@ -200,10 +219,16 @@ function getInfoNutrients(agent) {
 }
 )
 
+   }
+
 
 };
 
 function getInfoIngredients(agent) {
+
+  if(agent.parameters["ingredients"] == '' || agent.parameters["ingredients"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var ing_id = agent.parameters["ingredients"];
   var ing_en;
@@ -296,12 +321,15 @@ function getInfoIngredients(agent) {
 }
 )
 
+   }
 
 };
 
-
-
 function getIngredients(agent) {
+
+  if(agent.parameters["foodName"] == '' || agent.parameters["foodName"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var foodName_id = agent.parameters["foodName"];
   var foodName_en;
@@ -360,9 +388,15 @@ function getIngredients(agent) {
     }
   )
 
+   }
+
 };
 
 function getNutrients(agent) {
+
+  if(agent.parameters["foodName"] == '' || agent.parameters["foodName"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var foodName_id = agent.parameters["foodName"];
   var foodName_en;
@@ -434,9 +468,14 @@ function getNutrients(agent) {
     }
   )
 
+   }
 };
 
 function getFoodByIngredients(agent) {
+
+  if(agent.parameters["ingredients"] == '' || agent.parameters["ingredients"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var ing_id = agent.parameters["ingredients"];
   var ing_en;
@@ -470,12 +509,17 @@ function getFoodByIngredients(agent) {
       .then(aRes => {
         console.log('data ',aRes.data.results.bindings)
         var data = aRes.data.results.bindings;
+
+        if(data == '' || data == null) { 
+          agent.add('Makanan tidak ada') 
+        } else{
         
-        agent.add(`Produk makanan mengandung ${ing_id} : `);
-        for(var i in data) {    
-          var item = data[i];  
-              foodArray[i] = item.food_name.value;
-              agent.add('- ' + foodArray[i]);
+                agent.add(`Produk makanan mengandung ${ing_id} : `);
+                for(var i in data) {    
+                  var item = data[i];  
+                      foodArray[i] = item.food_name.value;
+                      agent.add('- ' + foodArray[i]);
+                }
         }
     }).catch (error => {
       console.log("Something is wrong  !! ");
@@ -486,9 +530,16 @@ function getFoodByIngredients(agent) {
 }
 )
 
+
+   }
+
 };
 
 function getFoodByNutrients(agent) {
+
+  if(agent.parameters["nutrients"] == '' || agent.parameters["nutrients"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var nut_id = agent.parameters["nutrients"];
   var nut_en;
@@ -523,6 +574,10 @@ function getFoodByNutrients(agent) {
         console.log('data ',aRes.data.results.bindings)
         var data = aRes.data.results.bindings;
 
+        if(data == '' || data == null) { 
+          agent.add('Makanan tidak ada') 
+        } else{
+
                       agent.add(`Produk makanan mengandung ${nut_id} : `);
                       
                       for(var i in data) {    
@@ -531,6 +586,7 @@ function getFoodByNutrients(agent) {
                             agent.add('- ' + foodArray[i]);
                       }
 
+        }
     }).catch (error => {
       console.log("Something is wrong  !! ");
       console.log(error);
@@ -540,9 +596,15 @@ function getFoodByNutrients(agent) {
 }
 )
 
+
+   }
 };
 
 function checkIngredients(agent) {
+
+  if(agent.parameters["foodName"] == '' || agent.parameters["foodName"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var foodName_id = agent.parameters["foodName"];
   var foodName_en;
@@ -604,10 +666,15 @@ function checkIngredients(agent) {
     }
   )
 
+   }
 
 };
 
 function checkNutrients(agent) {
+
+  if(agent.parameters["foodName"] == '' || agent.parameters["foodName"] == null) { 
+    agent.add("Informarsi tidak tersedia");
+   }else {
 
   var foodName_id = agent.parameters["foodName"];
   var foodName_en;
@@ -669,6 +736,7 @@ function checkNutrients(agent) {
   )
 
 
+   }
 };
 
 
